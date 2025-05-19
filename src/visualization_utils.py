@@ -522,34 +522,29 @@ def plot_attention_visualization(model, tokenizer, text, layer_idx=-1, head_idx=
         print("Aucune donnée d'attention disponible")
 
 
-def compare_all_models(classical_results, dl_results, bert_results):
+def compare_all_models(classical_results, dl_results, bert_results, use_lemmatization=True):
     """
-    Compare tous les modèles et retourne un DataFrame consolidé.
+    Compare tous les modèles entraînés.
     
     Args:
         classical_results: Résultats des modèles classiques
         dl_results: Résultats des modèles deep learning
         bert_results: Résultats des modèles BERT/DistilBERT
+        use_lemmatization: Indique si la lemmatisation a été utilisée
         
     Returns:
-        DataFrame contenant tous les résultats
+        all_results: DataFrame avec tous les résultats
+        all_results_sorted: DataFrame avec tous les résultats triés par score global
     """
+    import numpy as np
+    import pandas as pd
+    
     # Réinitialiser les indices avant de combiner
-    classical_results_reset = classical_results.reset_index(drop=True) if not classical_results.empty else pd.DataFrame()
-    dl_results_reset = dl_results.reset_index(drop=True) if not dl_results.empty else pd.DataFrame()
-    bert_results_reset = bert_results.reset_index(drop=True) if not bert_results.empty else pd.DataFrame()
+    classical_results_reset = classical_results.reset_index(drop=True)
+    dl_results_reset = dl_results.reset_index(drop=True)
+    bert_results_reset = bert_results.reset_index(drop=True)
     
-    # S'assurer que les DataFrames ont les mêmes colonnes
-    columns = ['Modèle', 'Type', 'Accuracy', 'Precision', 'Recall', 'F1 Score', 'ROC AUC', 
-              'Temps (s)', 'Taille (MB)', 'Inf. (s)', 'Inf. (ms/ex)']
-    
-    for df in [classical_results_reset, dl_results_reset, bert_results_reset]:
-        if not df.empty:
-            for col in columns:
-                if col not in df.columns:
-                    df[col] = None
-    
-    # Combiner les résultats
+    # Combiner tous les résultats
     all_results = pd.concat([
         classical_results_reset, 
         dl_results_reset, 
@@ -557,18 +552,36 @@ def compare_all_models(classical_results, dl_results, bert_results):
     ], ignore_index=True)
     
     # Ajouter l'information de lemmatisation à tous les modèles
-    all_results['Lemmatisation'] = 'Oui' if CONFIG.get("USE_LEMMATIZATION", True) else 'Non'
+    all_results['Lemmatisation'] = 'Oui' if use_lemmatization else 'Non'
     
     # Calculer un score de compromis
     if not all_results.empty:
-        all_results = calculate_global_score(all_results)
-        
+        # Calculer un score de compromis
+        all_results['Performance'] = all_results['F1 Score']
+        all_results['Speed'] = 1 / np.log10(all_results['Temps (s)'] + 1)  # Inverse du log pour avoir un score plus élevé pour les modèles rapides
+        all_results['Compactness'] = 1 / np.log10(all_results['Taille (MB)'] + 1)  # Inverse du log pour avoir un score plus élevé pour les modèles compacts
+
+        # Normaliser les scores entre 0 et 1
+        for col in ['Performance', 'Speed', 'Compactness']:
+            min_val = all_results[col].min()
+            max_val = all_results[col].max()
+            if max_val > min_val:  # Éviter la division par zéro
+                all_results[col] = (all_results[col] - min_val) / (max_val - min_val)
+            else:
+                all_results[col] = 0.5  # Valeur par défaut si tous les modèles ont la même valeur
+
+        # Calculer un score global (en donnant plus de poids à la performance)
+        all_results['Global_Score'] = (0.6 * all_results['Performance'] + 
+                                      0.2 * all_results['Speed'] + 
+                                      0.2 * all_results['Compactness'])
+
         # Trier par score global
         all_results_sorted = all_results.sort_values('Global_Score', ascending=False)
     else:
         all_results_sorted = all_results
-        
+    
     return all_results, all_results_sorted
+
 
 
 def create_comparison_visualizations(all_results, all_results_sorted=None):
