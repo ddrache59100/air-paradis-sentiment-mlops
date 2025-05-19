@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+
+# Jupyter
+.ipynb_checkpoints
+
+# MLflow
+mlruns/
+
+# Modèles (fichiers volumineux)
+*.h5
+*.keras
+*.pb
+*.pkl
+*.zip
+models/*
+!models/.gitkeep
+!models/bert/.gitkeep
+
+# Données
+data/*
+!data/.gitkeep

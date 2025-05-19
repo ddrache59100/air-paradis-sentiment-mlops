@@ -1,0 +1,5 @@
+{
+    "best_model": "models/deeplearning/cnn_(embeddings_entrainables).keras",
+    "best_model_type": "deeplearning",
+    "tokenizer": "models/deeplearning/tokenizer.pkl"
+}
