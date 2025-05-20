@@ -285,7 +285,8 @@ air-paradis-sentiment-mlops/
 │   └── bert/                     # Modèles BERT et DistilBERT
 │
 ├── visualisations/               # Visualisations des résultats
-└── results/                      # Métriques et résultats d'évaluation
+├── results/                      # Métriques et résultats d'évaluation
+└── data/                         # mettre training.1600000.processed.noemoticon.csv
 ```
 
 ## Résultats et comparaison des modèles
@@ -427,22 +428,3 @@ L'API bénéficie d'un pipeline CI/CD via GitHub Actions qui:
 Le code complet du déploiement est disponible dans notre dépôt dédié: [air-paradis-sentiment-api-cnn-embed](https://github.com/ddrache59100/air-paradis-sentiment-api-cnn-embed).
 
 Pour plus de détails sur l'API, consultez le fichier `api/README.md`.
-
-
-### Note concernant le notebook
-
-Le notebook `models_training.ipynb` a été développé dans un environnement spécifique et peut nécessiter quelques ajustements de chemins et d'imports pour s'exécuter correctement dans cette structure de projet. Si vous souhaitez exécuter le notebook, vous devrez peut-être:
-
-- Ajouter le répertoire parent au PYTHONPATH dans la première cellule:
-  ```python
-  import sys
-  import os
-  from pathlib import Path
-  
-  # Ajouter le répertoire du projet au PYTHONPATH
-  project_dir = Path(os.getcwd()).parent  # Si exécuté depuis notebooks/
-  if str(project_dir) not in sys.path:
-      sys.path.insert(0, str(project_dir))
-  ```
-
-Ces modifications seront documentées et implémentées dans une future mise à jour du notebook.
